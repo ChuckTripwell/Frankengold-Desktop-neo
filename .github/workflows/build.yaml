@@ -84,27 +84,36 @@ jobs:
           sep-tags: " "
           sep-annotations: " "
 
-      - name: Build Image
+      - name: Build Handheld Image
         id: build_image
         uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
         with:
           containerfiles: |
             ./Containerfile
-          image: ${{ env.IMAGE_NAME }}
+          image: ${{ env.IMAGE_NAME }}-handheld
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           oci: true
 
-      - name: Build Cachy Image
+      - name: Build Desktop Image
         id: build_cachy_image
         uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
         with:
           containerfiles: |
             ./Containerfile-cachy
-          image: ${{ env.IMAGE_NAME }}-cachy
+          image: ${{ env.IMAGE_NAME }}-desktop
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           oci: true
+
+      - name: Sign Kernel Image
+        env:
+          KERNEL_SECRET: ${{ secrets.KERNEL_SECRET }}
+        run: |
+          sudo apt-get install -y xz-utils zstd gzip
+          sudo podman run --entrypoint /bin/bash --name kernel-signer -v $PWD/build_files:/workspace/build_files:ro -e KERNEL_SECRET="${KERNEL_SECRET}" ${IMAGE_NAME}-desktop:${DEFAULT_TAG} /workspace/build_files/sign-kernel.sh
+          sudo podman commit kernel-signer ${IMAGE_NAME}-desktop:${DEFAULT_TAG}
+          sudo podman rm kernel-signer
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3
