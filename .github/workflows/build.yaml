@@ -114,8 +114,8 @@ jobs:
           KERNEL_SECRET: ${{ secrets.KERNEL_SECRET }}
         run: |
           sudo apt-get install -y xz-utils zstd gzip
-          sudo podman run --entrypoint /bin/bash --name kernel-signer -v $PWD/build_files:/workspace/build_files:ro -e KERNEL_SECRET="${KERNEL_SECRET}" ${IMAGE_NAME}-desktop:${DEFAULT_TAG} /workspace/build_files/sign-kernel.sh
-          sudo podman commit kernel-signer ${IMAGE_NAME}-desktop:${DEFAULT_TAG}
+          sudo podman run --entrypoint /bin/bash --name kernel-signer -v $PWD/build_files:/workspace/build_files:ro -e KERNEL_SECRET="${KERNEL_SECRET}" ${{ env.IMAGE_NAME }}-desktop:latest /workspace/build_files/sign-kernel.sh
+          sudo podman commit kernel-signer ${{ env.IMAGE_NAME }}-desktop:latest
           sudo podman rm kernel-signer
 
       - name: Login to GitHub Container Registry
